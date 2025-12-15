@@ -59,7 +59,7 @@ export default function Home() {
             settings: {
               panes: {
                 filters: { expanded: false, visible: false },
-                pageNavigation: { visible: false },
+                pageNavigation: { visible: true },
               },
               bars: { actionBar: { visible: false } },
               background: 1,
