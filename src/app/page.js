@@ -3,7 +3,6 @@
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 
-// ✅ client-only load to avoid `self is not defined`
 const PowerBIEmbed = dynamic(
   () => import("powerbi-client-react").then((m) => m.PowerBIEmbed),
   { ssr: false }
@@ -56,12 +55,13 @@ export default function Home() {
             id: embedInfo.reportId,
             embedUrl: embedInfo.embedUrl,
             accessToken: embedInfo.embedToken,
-            tokenType: 1, // Embed
+            tokenType: 1,
             settings: {
               panes: {
                 filters: { expanded: false, visible: false },
-                pageNavigation: { visible: true },
+                pageNavigation: { visible: false },
               },
+              bars: { actionBar: { visible: false } },
               background: 1,
             },
           }}
