@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "next": "16.0.10",
+    "powerbi-client": "^2.23.9",
+    "powerbi-client-react": "^2.0.0",
     "react": "19.2.1",
     "react-dom": "19.2.1"
   },
