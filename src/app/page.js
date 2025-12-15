@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 // ✅ client-only load to avoid `self is not defined`
 const PowerBIEmbed = dynamic(
@@ -9,101 +9,52 @@ const PowerBIEmbed = dynamic(
   { ssr: false }
 );
 
-function safeStringify(value) {
-  try {
-    return JSON.stringify(
-      value,
-      (_k, v) => (v instanceof Error ? { name: v.name, message: v.message, stack: v.stack } : v),
-      2
-    );
-  } catch {
-    return String(value);
-  }
-}
-
 export default function Home() {
   const [error, setError] = useState(null);
-
-  const [embedInfo, setEmbedInfo] = useState({
-    embedToken: null,
-    embedUrl: null,
-    reportId: null,
-  });
+  const [embedInfo, setEmbedInfo] = useState(null);
 
   useEffect(() => {
-    let cancelled = false;
-
     (async () => {
       try {
-        setError(null);
-
         const res = await fetch("http://localhost:3000/embed-token", { cache: "no-store" });
         const json = await res.json();
 
         if (!res.ok) throw new Error(json?.error || `embed-token failed (${res.status})`);
 
         const { embedToken, embedUrl, reportId } = json || {};
-        if (!embedToken) throw new Error("No embedToken returned from /embed-token");
-        if (!embedUrl) throw new Error("No embedUrl returned from /embed-token");
-        if (!reportId) throw new Error("No reportId returned from /embed-token");
+        if (!embedToken || !embedUrl || !reportId) {
+          throw new Error("embed-token response must include embedToken, embedUrl, reportId");
+        }
 
-        if (!cancelled) setEmbedInfo({ embedToken, embedUrl, reportId });
+        setEmbedInfo({ embedToken, embedUrl, reportId });
       } catch (e) {
-        if (!cancelled) setError(e?.message || String(e));
+        setError(e?.message || String(e));
       }
     })();
-
-    return () => {
-      cancelled = true;
-    };
   }, []);
 
-  const embedConfig = useMemo(
-    () => ({
-      type: "report",
-      id: embedInfo.reportId ?? undefined,
-      embedUrl: embedInfo.embedUrl ?? undefined,
-      accessToken: embedInfo.embedToken ?? undefined,
-      tokenType: 1,
-      settings: {
-        panes: { filters: { expanded: false, visible: false } },
-        background: 1,
-      },
-    }),
-    [embedInfo]
-  );
-
-  const eventHandlers = useMemo(
-    () =>
-      new Map([
-        ["loaded", () => console.log("Report loaded")],
-        ["rendered", () => console.log("Report rendered")],
-        [
-          "error",
-          (event) => {
-            console.log("PowerBI error", event?.detail);
-            setError(safeStringify(event?.detail));
-          },
-        ],
-      ]),
-    []
-  );
-
-  const canEmbed = !!embedInfo.embedToken && !!embedInfo.embedUrl && !!embedInfo.reportId;
+  if (error) return <pre style={{ color: "crimson" }}>{error}</pre>;
+  if (!embedInfo) return <div>Loading...</div>;
 
   return (
     <main style={{ padding: 16 }}>
       <h1>Power BI Embed</h1>
 
-      {error ? (
-        <pre style={{ color: "crimson", whiteSpace: "pre-wrap" }}>Error: {error}</pre>
-      ) : !canEmbed ? (
-        <div>Loading...</div>
-      ) : (
-        <div style={{ height: "80vh", border: "1px solid #ddd" }}>
-          <PowerBIEmbed embedConfig={embedConfig} eventHandlers={eventHandlers} />
-        </div>
-      )}
+      <div style={{ height: "80vh", border: "1px solid #ddd" }}>
+        <PowerBIEmbed
+          embedConfig={{
+            type: "report",
+            id: embedInfo.reportId,
+            embedUrl: embedInfo.embedUrl,
+            accessToken: embedInfo.embedToken,
+            tokenType: 1, // Embed
+            settings: {
+              panes: { filters: { expanded: false, visible: false } },
+              background: 1, // Transparent
+            },
+          }}
+        />
+      </div>
     </main>
   );
 }
