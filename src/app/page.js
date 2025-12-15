@@ -18,7 +18,6 @@ export default function Home() {
       try {
         const res = await fetch("http://localhost:3000/embed-token", { cache: "no-store" });
         const json = await res.json();
-
         if (!res.ok) throw new Error(json?.error || `embed-token failed (${res.status})`);
 
         const { embedToken, embedUrl, reportId } = json || {};
@@ -37,11 +36,21 @@ export default function Home() {
   if (!embedInfo) return <div>Loading...</div>;
 
   return (
-    <main style={{ padding: 16 }}>
-      <h1>Power BI Embed</h1>
+    <main
+      style={{
+        height: "100dvh",
+        padding: 12,
+        boxSizing: "border-box",
+        display: "flex",
+        flexDirection: "column",
+        gap: 12,
+      }}
+    >
+      <h1 style={{ margin: 0, fontSize: 18 }}>Power BI Embed</h1>
 
-      <div style={{ height: "80vh", border: "1px solid #ddd" }}>
+      <div style={{ flex: 1, minHeight: 0, border: "1px solid #ddd" }}>
         <PowerBIEmbed
+          cssClassName="pbiFill"
           embedConfig={{
             type: "report",
             id: embedInfo.reportId,
@@ -49,12 +58,24 @@ export default function Home() {
             accessToken: embedInfo.embedToken,
             tokenType: 1, // Embed
             settings: {
-              panes: { filters: { expanded: false, visible: false } },
-              background: 1, // Transparent
+              panes: {
+                filters: { expanded: false, visible: false },
+                pageNavigation: { visible: true },
+              },
+              background: 1,
             },
           }}
         />
       </div>
+
+      <style jsx global>{`
+        .pbiFill,
+        .pbiFill > div,
+        .pbiFill iframe {
+          width: 100% !important;
+          height: 100% !important;
+        }
+      `}</style>
     </main>
   );
 }
