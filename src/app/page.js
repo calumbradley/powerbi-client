@@ -21,32 +21,6 @@ function safeStringify(value) {
   }
 }
 
-class EmbedErrorBoundary extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { err: null };
-  }
-  static getDerivedStateFromError(err) {
-    return { err };
-  }
-  componentDidCatch(err) {
-    // Make sure it appears in devtools
-    console.error("PowerBIEmbed render error:", err);
-  }
-  render() {
-    if (this.state.err) {
-      return (
-        <pre style={{ color: "crimson", whiteSpace: "pre-wrap" }}>
-          PowerBIEmbed crashed:
-          {"\n"}
-          {safeStringify(this.state.err)}
-        </pre>
-      );
-    }
-    return this.props.children;
-  }
-}
-
 export default function Home() {
   const [error, setError] = useState(null);
 
@@ -90,14 +64,9 @@ export default function Home() {
       id: embedInfo.reportId ?? undefined,
       embedUrl: embedInfo.embedUrl ?? undefined,
       accessToken: embedInfo.embedToken ?? undefined,
-
-      // TokenType.Embed === 1
       tokenType: 1,
-
       settings: {
         panes: { filters: { expanded: false, visible: false } },
-
-        // BackgroundType.Transparent === 1 (2 is invalid and causes the crash)
         background: 1,
       },
     }),
@@ -132,9 +101,7 @@ export default function Home() {
         <div>Loading...</div>
       ) : (
         <div style={{ height: "80vh", border: "1px solid #ddd" }}>
-          <EmbedErrorBoundary>
-            <PowerBIEmbed embedConfig={embedConfig} eventHandlers={eventHandlers} />
-          </EmbedErrorBoundary>
+          <PowerBIEmbed embedConfig={embedConfig} eventHandlers={eventHandlers} />
         </div>
       )}
     </main>
